@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saksham App Store</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Saksham App Store</h1>
+    <p>Browse and download approved apps</p>
+  </header>
+
+  <main id="store">
+    <!-- App cards will be dynamically added here -->
+  </main>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Fetch approved apps
+    db.collection('apps')
+      .where('status', '==', 'approved')
+      .orderBy('uploadedAt', 'desc')
+      .get()
+      .then(snapshot => {
+        const container = document.getElementById('store');
+        if (snapshot.empty) {
+          container.innerHTML = '<p>No apps available yet.</p>';
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const app = doc.data();
+
+          // Create card
+          const card = document.createElement('div');
+          card.classList.add('app-card');
+          card.innerHTML = `
+            <h3>${app.appName}</h3>
+            <p>${app.description}</p>
+            <p><strong>Version:</strong> ${app.version}</p>
+            <a href="${app.apkUrl}" download>Download APK</a>
+            <br>
+            <img src="https://chart.googleapis.com/chart?cht=qr&chs=160x160&chl=${encodeURIComponent(app.apkUrl)}" alt="QR Code" width="80">
+          `;
+          container.appendChild(card);
+        });
+      })
+      .catch(err => {
+        console.error('Error fetching apps:', err);
+        document.getElementById('store').innerHTML = '<p>Error loading apps.</p>';
+      });
+  </script>
+</body>
+</html>
