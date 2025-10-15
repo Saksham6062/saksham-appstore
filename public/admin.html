@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Saksham App Store</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Admin Dashboard</h1>
+    <p>Approve or reject submitted apps</p>
+  </header>
+
+  <main id="appList">
+    <!-- App cards will appear here -->
+  </main>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Load pending apps in real-time
+    db.collection('apps')
+      .where('status', 'in', ['pending_scan', 'clean'])
+      .orderBy('uploadedAt', 'desc')
+      .onSnapshot(snapshot => {
+        const container = document.getElementById('appList');
+        container.innerHTML = '';
+        if (snapshot.empty) {
+          container.innerHTML = '<p>No apps pending approval.</p>';
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const app = doc.data();
+          const appId = doc.id;
+
+          const card = document.createElement('div');
+          card.classList.add('app-card');
+          card.innerHTML = `
+            <h3>${app.appName} (${app.version})</h3>
+            <p>${app.description}</p>
+            <p><strong>SHA256:</strong> ${app.sha256 || 'Pending'}</p>
+            <p><strong>Status:</strong> ${app.status}</p>
+            <a href="${app.apkUrl}" download>Download APK</a>
+            <br>
+            <button onclick="approve('${appId}')">✅ Approve</button>
+            <button onclick="reject('${appId}')">❌ Reject</button>
+          `;
+          container.appendChild(card);
+        });
+      });
+
+    // Approve app
+    function approve(appId) {
+      db.collection('apps').doc(appId).update({ status: 'approved' });
+      alert('App approved successfully!');
+    }
+
+    // Reject app
+    function reject(appId) {
+      db.collection('apps').doc(appId).update({ status: 'rejected' });
+      alert('App rejected.');
+    }
+  </script>
+</body>
+</html>
