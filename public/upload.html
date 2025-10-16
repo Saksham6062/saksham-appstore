@@ -1,100 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload App - Saksham App Store</title>
-  <link rel="stylesheet" href="css/style.css">
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload App — Saksham App Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-storage.js" type="module"></script>
 </head>
+
 <body>
-  <div class="upload-container">
-    <h1>Upload Your App</h1>
-    <form id="uploadForm">
-      <input type="text" id="appName" placeholder="App Name" required>
-      <textarea id="description" placeholder="App Description" required></textarea>
-      <input type="text" id="version" placeholder="Version (e.g., 1.0.0)" required>
-      <input type="file" id="apkFile" accept=".apk" required>
-      <button type="submit">Upload App</button>
-    </form>
-    <p id="statusMsg"></p>
-  </div>
+  <!-- Navigation bar -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <h2>Saksham App Store</h2>
+    </div>
+    <div class="nav-right">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="upload.html" class="nav-link active">Upload App</a>
+      <a href="login.html" class="nav-link">Developers</a>
+      <a href="admin.html" class="nav-link">Admin</a>
+    </div>
+  </nav>
 
-  <script>
-    // Firebase config
+  <main>
+    <div class="upload-container">
+      <h1>Upload Your App</h1>
+      <p>Submit your APK for review and publishing.</p>
+
+      <form id="uploadForm">
+        <input type="text" id="appName" placeholder="App Name" required />
+        <input type="text" id="version" placeholder="Version (e.g., 1.0.0)" required />
+        <textarea id="description" placeholder="App Description" rows="4" required></textarea>
+        <input type="file" id="apkFile" accept=".apk" required />
+        <button type="submit" id="uploadBtn">Upload</button>
+        <p id="statusMsg"></p>
+      </form>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 Saksham App Store</p>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-storage.js";
+
+    // 🔥 Firebase config
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
+      apiKey: "AIzaSyBSqIqhKAyRz0aTghiKs4exajVXXExN-kA",
+      authDomain: "saksham-appstore-8a2bc.firebaseapp.com",
+      projectId: "saksham-appstore-8a2bc",
+      storageBucket: "saksham-appstore-8a2bc.firebasestorage.app",
+      messagingSenderId: "864411399391",
+      appId: "1:864411399391:web:5d33d77205f9e12eff656a",
+      measurementId: "G-DM2VGMNMD2"
     };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
 
-    // Ensure user is logged in
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        alert('Please login first.');
-        window.location.href = 'login.html';
+    // 🔧 Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const uploadForm = document.getElementById("uploadForm");
+    const statusMsg = document.getElementById("statusMsg");
+
+    let currentUser = null;
+
+    // ✅ Check if developer logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+      } else {
+        alert("Please log in first to upload apps.");
+        window.location.href = "login.html";
       }
     });
 
-    // Handle Upload
-    const form = document.getElementById('uploadForm');
-    const statusMsg = document.getElementById('statusMsg');
-
-    form.addEventListener('submit', async e => {
+    // 📤 Upload handler
+    uploadForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const user = auth.currentUser;
-      if (!user) return alert('You must be logged in.');
+      const appName = document.getElementById("appName").value.trim();
+      const version = document.getElementById("version").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const apkFile = document.getElementById("apkFile").files[0];
 
-      const appName = document.getElementById('appName').value;
-      const description = document.getElementById('description').value;
-      const version = document.getElementById('version').value;
-      const file = document.getElementById('apkFile').files[0];
+      if (!apkFile) return alert("Please choose an APK file.");
 
-      if (!file) return alert('Please select an APK file.');
+      statusMsg.textContent = "Uploading file... Please wait ⏳";
 
-      // Upload APK to Firebase Storage
-      const timestamp = Date.now();
-      const storageRef = storage.ref(`apks/${timestamp}_${file.name}`);
-      const uploadTask = storageRef.put(file);
+      try {
+        // Upload to Firebase Storage
+        const storageRef = ref(storage, `apks/${Date.now()}_${apkFile.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, apkFile);
 
-      uploadTask.on('state_changed',
-        snapshot => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          statusMsg.textContent = `Uploading: ${progress.toFixed(2)}%`;
-        },
-        error => {
-          console.error(error);
-          statusMsg.textContent = 'Upload failed!';
-        },
-        async () => {
-          const apkUrl = await storageRef.getDownloadURL();
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            statusMsg.textContent = `Uploading: ${progress.toFixed(0)}%`;
+          },
+          (error) => {
+            console.error(error);
+            statusMsg.textContent = "Upload failed ❌";
+          },
+          async () => {
+            const apkUrl = await getDownloadURL(uploadTask.snapshot.ref);
 
-          // Save metadata to Firestore
-          await db.collection('apps').add({
-            appName,
-            description,
-            version,
-            apkUrl,
-            developerId: user.uid,
-            uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'pending_scan'
-          });
+            // Save to Firestore
+            await addDoc(collection(db, "apps"), {
+              appName,
+              version,
+              description,
+              apkUrl,
+              uploadedBy: currentUser.email,
+              status: "pending",
+              uploadedAt: serverTimestamp(),
+            });
 
-          statusMsg.textContent = 'App uploaded successfully! Await admin approval.';
-          form.reset();
-        }
-      );
+            statusMsg.textContent = "✅ Uploaded successfully! Awaiting admin approval.";
+            uploadForm.reset();
+          }
+        );
+      } catch (error) {
+        console.error("Error:", error);
+        statusMsg.textContent = "Error uploading app. Try again.";
+      }
     });
   </script>
 </body>
