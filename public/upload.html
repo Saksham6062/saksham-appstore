@@ -6,12 +6,7 @@
   <title>Upload App — Saksham App Store</title>
   <link rel="stylesheet" href="css/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-storage.js" type="module"></script>
 </head>
-
 <body>
   <!-- NAVBAR -->
   <nav class="navbar">
@@ -64,94 +59,96 @@
     const storage = getStorage(app);
     const auth = getAuth(app);
 
-    // ✅ Keep user logged in even after refresh
-    await setPersistence(auth, browserLocalPersistence);
+    // 🧠 Wrap logic in an async IIFE to ensure persistence before anything runs
+    (async () => {
+      await setPersistence(auth, browserLocalPersistence);
 
-    const appNameInput = document.getElementById("appName");
-    const versionInput = document.getElementById("version");
-    const descriptionInput = document.getElementById("description");
-    const apkFileInput = document.getElementById("apkFile");
-    const iconFileInput = document.getElementById("iconFile");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const statusMsg = document.getElementById("statusMsg");
+      let currentUserEmail = null;
+      const appNameInput = document.getElementById("appName");
+      const versionInput = document.getElementById("version");
+      const descriptionInput = document.getElementById("description");
+      const apkFileInput = document.getElementById("apkFile");
+      const iconFileInput = document.getElementById("iconFile");
+      const uploadBtn = document.getElementById("uploadBtn");
+      const statusMsg = document.getElementById("statusMsg");
 
-    let currentUserEmail = null;
-
-    // ⚡ Ensure developer is logged in
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        alert("Please log in first!");
-        window.location.href = "login.html";
-      } else {
-        currentUserEmail = user.email;
-        addLogoutButton();
-      }
-    });
-
-    // 🧠 Add Logout Button (only here)
-    function addLogoutButton() {
-      const navLinks = document.getElementById("navLinks");
-      const logoutBtn = document.createElement("a");
-      logoutBtn.textContent = "Logout";
-      logoutBtn.href = "#";
-      logoutBtn.className = "nav-link logout-btn";
-      logoutBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        await signOut(auth);
-        alert("👋 You’ve been logged out!");
-        window.location.href = "login.html";
+      // ⚡ Check login
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          alert("Please log in first!");
+          window.location.href = "login.html";
+        } else {
+          currentUserEmail = user.email;
+          addLogoutButton();
+        }
       });
-      navLinks.appendChild(logoutBtn);
-    }
 
-    // 📦 Upload APK
-    uploadBtn.addEventListener("click", async () => {
-      const appName = appNameInput.value.trim();
-      const version = versionInput.value.trim();
-      const description = descriptionInput.value.trim();
-      const apkFile = apkFileInput.files[0];
-      const iconFile = iconFileInput.files[0];
-
-      if (!appName || !version || !apkFile) {
-        alert("Please fill in all required fields and select an APK file.");
-        return;
+      // 🧩 Add logout button
+      function addLogoutButton() {
+        const navLinks = document.getElementById("navLinks");
+        if (document.querySelector(".logout-btn")) return;
+        const logoutBtn = document.createElement("a");
+        logoutBtn.textContent = "Logout";
+        logoutBtn.href = "#";
+        logoutBtn.className = "nav-link logout-btn";
+        logoutBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          await signOut(auth);
+          alert("👋 You’ve been logged out!");
+          window.location.href = "login.html";
+        });
+        navLinks.appendChild(logoutBtn);
       }
 
-      statusMsg.textContent = "Uploading APK...";
-      try {
-        const apkRef = ref(storage, `apks/${Date.now()}_${apkFile.name}`);
-        await uploadBytes(apkRef, apkFile);
-        const apkUrl = await getDownloadURL(apkRef);
+      // 📦 Upload App
+      uploadBtn.addEventListener("click", async () => {
+        const appName = appNameInput.value.trim();
+        const version = versionInput.value.trim();
+        const description = descriptionInput.value.trim();
+        const apkFile = apkFileInput.files[0];
+        const iconFile = iconFileInput.files[0];
 
-        let iconUrl = "";
-        if (iconFile) {
-          const iconRef = ref(storage, `icons/${Date.now()}_${iconFile.name}`);
-          await uploadBytes(iconRef, iconFile);
-          iconUrl = await getDownloadURL(iconRef);
+        if (!appName || !version || !apkFile) {
+          alert("Please fill in all required fields and select an APK file.");
+          return;
         }
 
-        await addDoc(collection(db, "apps"), {
-          appName,
-          version,
-          description,
-          apkUrl,
-          iconUrl,
-          uploadedBy: currentUserEmail,
-          status: "pending",
-          createdAt: serverTimestamp(),
-        });
+        statusMsg.textContent = "Uploading APK...";
+        try {
+          const apkRef = ref(storage, `apks/${Date.now()}_${apkFile.name}`);
+          await uploadBytes(apkRef, apkFile);
+          const apkUrl = await getDownloadURL(apkRef);
 
-        statusMsg.textContent = "✅ App uploaded successfully! Pending admin approval.";
-        appNameInput.value = "";
-        versionInput.value = "";
-        descriptionInput.value = "";
-        apkFileInput.value = "";
-        iconFileInput.value = "";
-      } catch (error) {
-        console.error(error);
-        statusMsg.textContent = "❌ Upload failed: " + error.message;
-      }
-    });
+          let iconUrl = "";
+          if (iconFile) {
+            const iconRef = ref(storage, `icons/${Date.now()}_${iconFile.name}`);
+            await uploadBytes(iconRef, iconFile);
+            iconUrl = await getDownloadURL(iconRef);
+          }
+
+          await addDoc(collection(db, "apps"), {
+            appName,
+            version,
+            description,
+            apkUrl,
+            iconUrl,
+            uploadedBy: currentUserEmail,
+            status: "pending",
+            createdAt: serverTimestamp(),
+          });
+
+          statusMsg.textContent = "✅ App uploaded successfully! Pending admin approval.";
+          appNameInput.value = "";
+          versionInput.value = "";
+          descriptionInput.value = "";
+          apkFileInput.value = "";
+          iconFileInput.value = "";
+        } catch (error) {
+          console.error(error);
+          statusMsg.textContent = "❌ Upload failed: " + error.message;
+        }
+      });
+    })();
   </script>
 </body>
 </html>
