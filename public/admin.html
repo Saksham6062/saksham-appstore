@@ -1,81 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Saksham App Store</title>
-  <link rel="stylesheet" href="css/style.css">
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Saksham App Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js" type="module"></script>
 </head>
 <body>
-  <header>
-    <h1>Admin Dashboard</h1>
-    <p>Approve or reject submitted apps</p>
-  </header>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <h2>Saksham App Store</h2>
+    </div>
+    <div class="nav-right">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="upload.html" class="nav-link">Upload App</a>
+      <a href="login.html" class="nav-link">Developers</a>
+      <a href="admin.html" class="nav-link active">Admin</a>
+    </div>
+  </nav>
 
-  <main id="appList">
-    <!-- App cards will appear here -->
+  <!-- ADMIN DASHBOARD -->
+  <main>
+    <div class="admin-container">
+      <h1>Pending App Approvals</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>App Name</th>
+            <th>Version</th>
+            <th>Description</th>
+            <th>Uploaded By</th>
+            <th>APK</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="appsTableBody">
+          <tr><td colspan="6">Loading pending apps...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </main>
 
-  <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  <footer>
+    <p>© 2025 Saksham App Store</p>
+  </footer>
 
-    // Load pending apps in real-time
-    db.collection('apps')
-      .where('status', 'in', ['pending_scan', 'clean'])
-      .orderBy('uploadedAt', 'desc')
-      .onSnapshot(snapshot => {
-        const container = document.getElementById('appList');
-        container.innerHTML = '';
-        if (snapshot.empty) {
-          container.innerHTML = '<p>No apps pending approval.</p>';
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+    // 🔥 Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSqIqhKAyRz0aTghiKs4exajVXXExN-kA",
+      authDomain: "saksham-appstore-8a2bc.firebaseapp.com",
+      projectId: "saksham-appstore-8a2bc",
+      storageBucket: "saksham-appstore-8a2bc.firebasestorage.app",
+      messagingSenderId: "864411399391",
+      appId: "1:864411399391:web:5d33d77205f9e12eff656a",
+      measurementId: "G-DM2VGMNMD2"
+    };
+
+    // 🔧 Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const tableBody = document.getElementById("appsTableBody");
+    const adminEmail = "sahusaksham453675@gmail.com"; // 🔐 Replace with your Gmail
+
+    // ✅ Check admin login
+    onAuthStateChanged(auth, (user) => {
+      if (!user || user.email !== adminEmail) {
+        alert("Access denied. Only admin can view this page.");
+        window.location.href = "login.html";
+      } else {
+        loadPendingApps();
+      }
+    });
+
+    // 📋 Load pending apps
+    async function loadPendingApps() {
+      tableBody.innerHTML = "<tr><td colspan='6'>Loading pending apps...</td></tr>";
+      try {
+        const appsRef = collection(db, "apps");
+        const q = query(appsRef, where("status", "==", "pending"));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          tableBody.innerHTML = "<tr><td colspan='6'>No pending apps.</td></tr>";
           return;
         }
 
-        snapshot.forEach(doc => {
-          const app = doc.data();
-          const appId = doc.id;
-
-          const card = document.createElement('div');
-          card.classList.add('app-card');
-          card.innerHTML = `
-            <h3>${app.appName} (${app.version})</h3>
-            <p>${app.description}</p>
-            <p><strong>SHA256:</strong> ${app.sha256 || 'Pending'}</p>
-            <p><strong>Status:</strong> ${app.status}</p>
-            <a href="${app.apkUrl}" download>Download APK</a>
-            <br>
-            <button onclick="approve('${appId}')">✅ Approve</button>
-            <button onclick="reject('${appId}')">❌ Reject</button>
+        tableBody.innerHTML = "";
+        querySnapshot.forEach((docSnap) => {
+          const app = docSnap.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${app.appName}</td>
+            <td>${app.version}</td>
+            <td>${app.description}</td>
+            <td>${app.uploadedBy}</td>
+            <td><a href="${app.apkUrl}" download>Download APK</a></td>
+            <td>
+              <button onclick="approveApp('${docSnap.id}')">Approve</button>
+              <button class="reject" onclick="rejectApp('${docSnap.id}')">Reject</button>
+            </td>
           `;
-          container.appendChild(card);
+          tableBody.appendChild(row);
         });
-      });
-
-    // Approve app
-    function approve(appId) {
-      db.collection('apps').doc(appId).update({ status: 'approved' });
-      alert('App approved successfully!');
+      } catch (error) {
+        console.error("Error loading apps:", error);
+        tableBody.innerHTML = "<tr><td colspan='6'>Error loading apps.</td></tr>";
+      }
     }
 
-    // Reject app
-    function reject(appId) {
-      db.collection('apps').doc(appId).update({ status: 'rejected' });
-      alert('App rejected.');
-    }
+    // ✅ Approve app
+    window.approveApp = async (appId) => {
+      try {
+        await updateDoc(doc(db, "apps", appId), { status: "approved" });
+        alert("App approved successfully ✅");
+        loadPendingApps();
+      } catch (error) {
+        console.error("Error approving app:", error);
+        alert("Error approving app ❌");
+      }
+    };
+
+    // ❌ Reject app
+    window.rejectApp = async (appId) => {
+      try {
+        await updateDoc(doc(db, "apps", appId), { status: "rejected" });
+        alert("App rejected ❌");
+        loadPendingApps();
+      } catch (error) {
+        console.error("Error rejecting app:", error);
+        alert("Error rejecting app ❌");
+      }
+    };
   </script>
 </body>
 </html>
