@@ -1,66 +1,44 @@
-body {
+/* 🔹 NAVIGATION BAR */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #007bff;
+  padding: 10px 20px;
+  color: white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  flex-wrap: wrap;
+}
+
+.navbar h2 {
   margin: 0;
-  font-family: "Poppins", sans-serif;
-  background: linear-gradient(135deg, #f7f9fc, #e3e8ef);
-  color: #333;
+  font-size: 22px;
 }
 
-header {
-  background: #007bff;
-  color: #fff;
-  padding: 20px 0;
-  text-align: center;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+.nav-right {
+  display: flex;
+  gap: 15px;
 }
 
-main {
-  padding: 30px;
-}
-
-.app-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-}
-
-.app-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-}
-
-.app-card:hover {
-  transform: scale(1.03);
-}
-
-.app-card img {
-  width: 80px;
-  height: 80px;
-  border-radius: 15px;
-  margin-bottom: 10px;
-}
-
-.download-btn {
-  display: inline-block;
-  background: #007bff;
+.nav-link {
   color: white;
   text-decoration: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  margin-top: 10px;
-  transition: background 0.2s;
+  font-weight: 600;
+  transition: color 0.2s, transform 0.2s;
 }
 
-.download-btn:hover {
-  background: #0056b3;
+.nav-link:hover {
+  color: #ffd700;
+  transform: scale(1.05);
 }
 
-footer {
+.nav-link.active {
+  text-decoration: underline;
+}
+
+/* 🔹 HEADER */
+.page-header {
   text-align: center;
-  padding: 15px;
-  font-size: 14px;
-  color: #666;
+  margin-top: 30px;
+  margin-bottom: 20px;
 }
