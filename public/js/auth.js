@@ -1,54 +1,71 @@
 // ---------------------------
 // 1️⃣ Hardcoded developer accounts
-// Add as many developers as you want
 const developers = [
-  { email: "dev1@example.com", password: "123456" },
-  { email: "dev2@example.com", password: "1234567" },
-  { email: "dev3@example.com", password: "12345678" },
-  { email: "dev4@example.com", password: "123456789" }
+  { email: "saksham@appstore.com", password: "supersecret123" }
 ];
 
 // ---------------------------
-// 2️⃣ Grab input fields and button from login.html
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const loginBtn = document.getElementById("loginBtn");
-const statusMsg = document.getElementById("statusMsg");
-
-// ---------------------------
-// 3️⃣ Login button click event
-loginBtn.addEventListener("click", () => {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  // Find developer in list
+// 2️⃣ Function to handle login
+function login(email, password) {
   const dev = developers.find(d => d.email === email && d.password === password);
 
   if (dev) {
-    // ✅ Successful login
-    localStorage.setItem("devLoggedIn", "true");
-    localStorage.setItem("devEmail", email); // optional
-    statusMsg.textContent = "✅ Login successful!";
-    setTimeout(() => { window.location.href = "upload.html"; }, 1000);
-  } else {
-    // ❌ Invalid credentials
-    statusMsg.textContent = "❌ Invalid email or password";
+    // ✅ Save login info with expiry time (7 days)
+    const sessionData = {
+      loggedIn: true,
+      email: email,
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
+    };
+    localStorage.setItem("devSession", JSON.stringify(sessionData));
+    return true;
   }
-});
+  return false;
+}
 
 // ---------------------------
-// 4️⃣ Function to check login on protected pages (upload.html)
+// 3️⃣ Function to check if session is valid
+function isLoggedIn() {
+  const data = localStorage.getItem("devSession");
+  if (!data) return false;
+
+  const session = JSON.parse(data);
+  if (Date.now() > session.expiresAt) {
+    localStorage.removeItem("devSession");
+    return false;
+  }
+  return session.loggedIn === true;
+}
+
+// ---------------------------
+// 4️⃣ Function to require login (for protected pages)
 function checkLogin() {
-  if (localStorage.getItem("devLoggedIn") !== "true") {
+  if (!isLoggedIn()) {
     alert("Login required!");
     window.location.href = "login.html";
   }
 }
 
 // ---------------------------
-// 5️⃣ Logout function (optional)
+// 5️⃣ Logout function
 function logout() {
-  localStorage.removeItem("devLoggedIn");
-  localStorage.removeItem("devEmail");
+  localStorage.removeItem("devSession");
   window.location.href = "login.html";
 }
+
+// ---------------------------
+// 6️⃣ Attach login button on login.html
+document.addEventListener("DOMContentLoaded", () => {
+  const loginBtn = document.getElementById("loginBtn");
+  if (loginBtn) {
+    loginBtn.addEventListener("click", () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (login(email, password)) {
+        document.getElementById("statusMsg").textContent = "✅ Login successful!";
+        setTimeout(() => window.location.href = "upload.html", 1000);
+      } else {
+        document.getElementById("statusMsg").textContent = "❌ Invalid email or password";
+      }
+    });
+  }
+});
