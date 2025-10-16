@@ -1,4 +1,22 @@
-/* 🔹 NAVIGATION BAR */
+/* ------------------------------ */
+/*  GENERAL STYLES */
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #f7f9fc, #e3e8ef);
+  color: #333;
+}
+
+a {
+  text-decoration: none;
+}
+
+p {
+  margin: 0.5em 0;
+}
+
+/* ------------------------------ */
+/*  NAVBAR */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -36,9 +54,212 @@
   text-decoration: underline;
 }
 
-/* 🔹 HEADER */
+/* ------------------------------ */
+/*  HEADER */
 .page-header {
   text-align: center;
-  margin-top: 30px;
-  margin-bottom: 20px;
+  margin: 30px 0 20px 0;
+}
+
+/* ------------------------------ */
+/*  APP GRID (INDEX PAGE) */
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.app-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.app-card:hover {
+  transform: scale(1.03);
+}
+
+.app-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 15px;
+  margin-bottom: 10px;
+}
+
+.download-btn {
+  display: inline-block;
+  background: #007bff;
+  color: white;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+
+.download-btn:hover {
+  background: #0056b3;
+}
+
+/* ------------------------------ */
+/*  FOOTER */
+footer {
+  text-align: center;
+  padding: 15px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* ------------------------------ */
+/*  UPLOAD PAGE */
+.upload-container {
+  max-width: 500px;
+  margin: 60px auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.upload-container h1 {
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.upload-container input,
+.upload-container textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: "Poppins", sans-serif;
+}
+
+#uploadBtn {
+  width: 100%;
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#uploadBtn:hover {
+  background: #0056b3;
+}
+
+#statusMsg {
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+/* ------------------------------ */
+/*  LOGIN PAGE */
+.login-container {
+  max-width: 400px;
+  margin: 60px auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.login-container h1 {
+  color: #007bff;
+  margin-bottom: 15px;
+}
+
+.login-container input {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: "Poppins", sans-serif;
+}
+
+.login-container button {
+  width: 100%;
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.login-container button:hover {
+  background: #0056b3;
+}
+
+/* ------------------------------ */
+/*  ADMIN PAGE */
+.admin-container {
+  max-width: 900px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.admin-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-container th,
+.admin-container td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.admin-container th {
+  background: #007bff;
+  color: white;
+}
+
+.admin-container button {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 5px;
+  transition: background 0.2s;
+}
+
+.admin-container button.reject {
+  background: #dc3545;
+}
+
+.admin-container button:hover {
+  opacity: 0.85;
+}
+
+/* ------------------------------ */
+/*  RESPONSIVE */
+@media (max-width: 600px) {
+  .app-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-right {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 }
