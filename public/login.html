@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Developer Login — Saksham App Store</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
 </head>
 <body>
   <!-- NAVBAR -->
@@ -23,9 +23,10 @@
   <main>
     <div class="login-container">
       <h1>Developer Login</h1>
-      <input type="email" id="email" placeholder="Email" required>
-      <input type="password" id="password" placeholder="Password" required>
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
       <button id="loginBtn">Login</button>
+      <button id="signupBtn" class="secondary-btn">Sign Up</button>
       <p id="statusMsg"></p>
     </div>
   </main>
@@ -34,6 +35,79 @@
     <p>© 2025 Saksham App Store</p>
   </footer>
 
-  <script src="js/auth.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+    // 🔥 Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBSqIqhKAyRz0aTghiKs4exajVXXExN-kA",
+      authDomain: "saksham-appstore-8a2bc.firebaseapp.com",
+      projectId: "saksham-appstore-8a2bc",
+      storageBucket: "saksham-appstore-8a2bc.firebasestorage.app",
+      messagingSenderId: "864411399391",
+      appId: "1:864411399391:web:5d33d77205f9e12eff656a",
+      measurementId: "G-DM2VGMNMD2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // 🧠 Keep session persistent even after refresh
+    (async () => {
+      await setPersistence(auth, browserLocalPersistence);
+
+      const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
+      const loginBtn = document.getElementById("loginBtn");
+      const signupBtn = document.getElementById("signupBtn");
+      const statusMsg = document.getElementById("statusMsg");
+
+      // 🔄 Redirect if already logged in
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          window.location.href = "upload.html";
+        }
+      });
+
+      // 🔑 Login
+      loginBtn.addEventListener("click", async () => {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        if (!email || !password) {
+          statusMsg.textContent = "Please enter both email and password.";
+          return;
+        }
+
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          statusMsg.textContent = "✅ Logged in successfully!";
+          window.location.href = "upload.html";
+        } catch (error) {
+          console.error(error);
+          statusMsg.textContent = "❌ Login failed: " + error.message;
+        }
+      });
+
+      // 🆕 Sign Up
+      signupBtn.addEventListener("click", async () => {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        if (!email || !password) {
+          statusMsg.textContent = "Please enter both email and password.";
+          return;
+        }
+
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          statusMsg.textContent = "✅ Account created successfully!";
+          window.location.href = "upload.html";
+        } catch (error) {
+          console.error(error);
+          statusMsg.textContent = "❌ Sign up failed: " + error.message;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
