@@ -1,20 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Developer Login — Saksham App Store</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js" type="module"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <!-- NAVBAR -->
   <nav class="navbar">
-    <div class="nav-left">
-      <h2>Saksham App Store</h2>
-    </div>
+    <div class="nav-left"><h2>Saksham App Store</h2></div>
     <div class="nav-right">
       <a href="index.html" class="nav-link">Home</a>
       <a href="upload.html" class="nav-link">Upload App</a>
@@ -27,7 +23,9 @@
   <main>
     <div class="login-container">
       <h1>Developer Login</h1>
-      <button id="googleLoginBtn">Sign in with Google</button>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button id="loginBtn">Login</button>
       <p id="statusMsg"></p>
     </div>
   </main>
@@ -36,53 +34,6 @@
     <p>© 2025 Saksham App Store</p>
   </footer>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-
-    // 🔥 Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBSqIqhKAyRz0aTghiKs4exajVXXExN-kA",
-      authDomain: "saksham-appstore-8a2bc.firebaseapp.com",
-      projectId: "saksham-appstore-8a2bc",
-      storageBucket: "saksham-appstore-8a2bc.firebasestorage.app",
-      messagingSenderId: "864411399391",
-      appId: "1:864411399391:web:5d33d77205f9e12eff656a",
-      measurementId: "G-DM2VGMNMD2"
-    };
-
-    // 🔧 Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-
-    const googleLoginBtn = document.getElementById("googleLoginBtn");
-    const statusMsg = document.getElementById("statusMsg");
-
-    // 📌 Sign in with Google
-    googleLoginBtn.addEventListener("click", async () => {
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        statusMsg.textContent = `✅ Logged in as ${user.email}`;
-        // Store login state
-        localStorage.setItem("devLoggedIn", "true");
-        setTimeout(() => {
-          window.location.href = "upload.html";
-        }, 1000);
-      } catch (error) {
-        console.error(error);
-        statusMsg.textContent = `❌ Login failed: ${error.message}`;
-      }
-    });
-
-    // ⚡ Auto-redirect if already logged in
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        localStorage.setItem("devLoggedIn", "true");
-        window.location.href = "upload.html";
-      }
-    });
-  </script>
+  <script src="js/auth.js"></script>
 </body>
 </html>
