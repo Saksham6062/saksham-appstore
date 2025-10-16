@@ -1,68 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Developer Login - Saksham App Store</title>
-  <link rel="stylesheet" href="css/style.css">
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Developer Login — Saksham App Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js" type="module"></script>
 </head>
 <body>
-  <div class="auth-container">
-    <h1>Developer Login</h1>
-    <form id="loginForm">
-      <input type="email" id="email" placeholder="Email" required>
-      <input type="password" id="pass" placeholder="Password" required>
-      <button type="submit">Login</button>
-    </form>
-    <p>Or</p>
-    <form id="signupForm">
-      <input type="email" id="signupEmail" placeholder="Email" required>
-      <input type="password" id="signupPass" placeholder="Password" required>
-      <button type="submit">Sign Up</button>
-    </form>
-  </div>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <h2>Saksham App Store</h2>
+    </div>
+    <div class="nav-right">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="upload.html" class="nav-link">Upload App</a>
+      <a href="login.html" class="nav-link active">Developers</a>
+      <a href="admin.html" class="nav-link">Admin</a>
+    </div>
+  </nav>
 
-  <script>
-    // Firebase config
+  <!-- LOGIN/SIGNUP FORM -->
+  <main>
+    <div class="login-container">
+      <h1>Developer Login / Signup</h1>
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button id="loginBtn">Login</button>
+      <button id="signupBtn">Sign Up</button>
+      <p id="statusMsg"></p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 Saksham App Store</p>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+    // 🔥 Firebase config
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
+      apiKey: "AIzaSyBSqIqhKAyRz0aTghiKs4exajVXXExN-kA",
+      authDomain: "saksham-appstore-8a2bc.firebaseapp.com",
+      projectId: "saksham-appstore-8a2bc",
+      storageBucket: "saksham-appstore-8a2bc.firebasestorage.app",
+      messagingSenderId: "864411399391",
+      appId: "1:864411399391:web:5d33d77205f9e12eff656a",
+      measurementId: "G-DM2VGMNMD2"
     };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
 
-    // Login
-    document.getElementById('loginForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const pass = document.getElementById('pass').value;
+    // 🔧 Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const statusMsg = document.getElementById("statusMsg");
+
+    // 📌 Developer login
+    loginBtn.addEventListener("click", async () => {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      if (!email || !password) return alert("Enter email and password");
+
       try {
-        await auth.signInWithEmailAndPassword(email, pass);
-        alert('Login successful!');
-        window.location.href = 'upload.html';
-      } catch(err) {
-        alert('Login Error: ' + err.message);
+        await signInWithEmailAndPassword(auth, email, password);
+        statusMsg.textContent = "✅ Logged in successfully!";
+        setTimeout(() => {
+          window.location.href = "upload.html";
+        }, 1000);
+      } catch (error) {
+        console.error(error);
+        statusMsg.textContent = "❌ Login failed: " + error.message;
       }
     });
 
-    // Sign Up
-    document.getElementById('signupForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const email = document.getElementById('signupEmail').value;
-      const pass = document.getElementById('signupPass').value;
+    // 📌 Developer signup
+    signupBtn.addEventListener("click", async () => {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      if (!email || !password) return alert("Enter email and password");
+
       try {
-        await auth.createUserWithEmailAndPassword(email, pass);
-        alert('Sign up successful! You are now logged in.');
-        window.location.href = 'upload.html';
-      } catch(err) {
-        alert('Sign Up Error: ' + err.message);
+        await createUserWithEmailAndPassword(auth, email, password);
+        statusMsg.textContent = "✅ Account created! Logged in.";
+        setTimeout(() => {
+          window.location.href = "upload.html";
+        }, 1000);
+      } catch (error) {
+        console.error(error);
+        statusMsg.textContent = "❌ Signup failed: " + error.message;
       }
     });
   </script>
