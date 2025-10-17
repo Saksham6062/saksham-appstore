@@ -1,154 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upload App — Saksham App Store</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Upload — Saksham App Store</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="nav-left"><h2>Saksham App Store</h2></div>
-    <div class="nav-right" id="navLinks">
-      <a href="index.html" class="nav-link">Home</a>
-      <a href="upload.html" class="nav-link active">Upload App</a>
-      <a href="login.html" class="nav-link">Developers</a>
-      <a href="admin.html" class="nav-link">Admin</a>
+  <header class="site-header">
+    <div class="brand">
+      <div class="logo">SA</div>
+      <div>
+        <h1>Upload App</h1>
+        <p class="muted">Anyone can upload — published instantly</p>
+      </div>
     </div>
-  </nav>
 
-  <!-- UPLOAD FORM -->
-  <main>
+    <div class="actions">
+      <a class="btn" href="index.html">Home</a>
+      <a class="btn ghost" href="admin.html">Admin</a>
+      <button id="darkToggle" class="toggle-dark">Dark</button>
+    </div>
+  </header>
+
+  <main class="app">
     <div class="upload-container">
-      <h1>Upload Your APK</h1>
-      <input type="text" id="appName" placeholder="App Name" required />
-      <input type="text" id="version" placeholder="Version (e.g., 1.0.0)" required />
-      <textarea id="description" placeholder="Description"></textarea>
-      <input type="file" id="apkFile" accept=".apk" required />
-      <input type="file" id="iconFile" accept="image/*" />
-      <button id="uploadBtn">Upload App</button>
-      <p id="statusMsg"></p>
+      <input id="appName" placeholder="App name *">
+      <input id="version" placeholder="Version (1.0.0) *">
+      <input id="category" placeholder="Category (Games, Tools)">
+      <textarea id="description" rows="3" placeholder="Short description"></textarea>
+
+      <label class="small">APK file *</label>
+      <input id="apkFile" type="file" accept=".apk,.aab">
+
+      <label class="small">Icon (optional)</label>
+      <input id="iconFile" type="file" accept="image/*">
+
+      <label class="small">Screenshots (optional, multiple)</label>
+      <input id="screenshots" type="file" accept="image/*" multiple>
+
+      <input id="developerName" placeholder="Developer name (optional)">
+
+      <div style="display:flex;gap:10px;align-items:center">
+        <button id="uploadBtn" class="btn">Start Upload</button>
+        <div id="uploadState" class="small">Idle</div>
+      </div>
+
+      <div class="progress"><i id="progressBar"></i></div>
     </div>
   </main>
 
-  <footer>
-    <p>© 2025 Saksham App Store</p>
-  </footer>
+  <div id="toast" class="toast"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-storage.js";
-    import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-
-    // 🔥 Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBSqIqhKAyRz0aTghiKs4exajVXXExN-kA",
-      authDomain: "saksham-appstore-8a2bc.firebaseapp.com",
-      projectId: "saksham-appstore-8a2bc",
-      storageBucket: "saksham-appstore-8a2bc.firebasestorage.app",
-      messagingSenderId: "864411399391",
-      appId: "1:864411399391:web:5d33d77205f9e12eff656a",
-      measurementId: "G-DM2VGMNMD2"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-    const auth = getAuth(app);
-
-    // 🧠 Wrap logic in an async IIFE to ensure persistence before anything runs
-    (async () => {
-      await setPersistence(auth, browserLocalPersistence);
-
-      let currentUserEmail = null;
-      const appNameInput = document.getElementById("appName");
-      const versionInput = document.getElementById("version");
-      const descriptionInput = document.getElementById("description");
-      const apkFileInput = document.getElementById("apkFile");
-      const iconFileInput = document.getElementById("iconFile");
-      const uploadBtn = document.getElementById("uploadBtn");
-      const statusMsg = document.getElementById("statusMsg");
-
-      // ⚡ Check login
-      onAuthStateChanged(auth, (user) => {
-        if (!user) {
-          alert("Please log in first!");
-          window.location.href = "login.html";
-        } else {
-          currentUserEmail = user.email;
-          addLogoutButton();
-        }
-      });
-
-      // 🧩 Add logout button
-      function addLogoutButton() {
-        const navLinks = document.getElementById("navLinks");
-        if (document.querySelector(".logout-btn")) return;
-        const logoutBtn = document.createElement("a");
-        logoutBtn.textContent = "Logout";
-        logoutBtn.href = "#";
-        logoutBtn.className = "nav-link logout-btn";
-        logoutBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          await signOut(auth);
-          alert("👋 You’ve been logged out!");
-          window.location.href = "login.html";
-        });
-        navLinks.appendChild(logoutBtn);
-      }
-
-      // 📦 Upload App
-      uploadBtn.addEventListener("click", async () => {
-        const appName = appNameInput.value.trim();
-        const version = versionInput.value.trim();
-        const description = descriptionInput.value.trim();
-        const apkFile = apkFileInput.files[0];
-        const iconFile = iconFileInput.files[0];
-
-        if (!appName || !version || !apkFile) {
-          alert("Please fill in all required fields and select an APK file.");
-          return;
-        }
-
-        statusMsg.textContent = "Uploading APK...";
-        try {
-          const apkRef = ref(storage, `apks/${Date.now()}_${apkFile.name}`);
-          await uploadBytes(apkRef, apkFile);
-          const apkUrl = await getDownloadURL(apkRef);
-
-          let iconUrl = "";
-          if (iconFile) {
-            const iconRef = ref(storage, `icons/${Date.now()}_${iconFile.name}`);
-            await uploadBytes(iconRef, iconFile);
-            iconUrl = await getDownloadURL(iconRef);
-          }
-
-          await addDoc(collection(db, "apps"), {
-            appName,
-            version,
-            description,
-            apkUrl,
-            iconUrl,
-            uploadedBy: currentUserEmail,
-            status: "pending",
-            createdAt: serverTimestamp(),
-          });
-
-          statusMsg.textContent = "✅ App uploaded successfully! Pending admin approval.";
-          appNameInput.value = "";
-          versionInput.value = "";
-          descriptionInput.value = "";
-          apkFileInput.value = "";
-          iconFileInput.value = "";
-        } catch (error) {
-          console.error(error);
-          statusMsg.textContent = "❌ Upload failed: " + error.message;
-        }
-      });
-    })();
+    initializeApp(window.SAKSHAM_FIREBASE_CONFIG);
+    import('./js/upload.js');
   </script>
 </body>
 </html>
