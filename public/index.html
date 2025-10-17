@@ -1,51 +1,88 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Saksham App Store</title>
   <link rel="stylesheet" href="css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js" type="module"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
-
 <body>
-  <!-- 🌐 NAVIGATION BAR -->
-  <nav class="navbar">
-    <div class="nav-left">
-      <h2>Saksham App Store</h2>
+  <header class="site-header">
+    <div class="brand">
+      <div class="logo">SA</div>
+      <div>
+        <h1>Saksham App Store</h1>
+        <p class="muted">Open uploads — discover apps</p>
+      </div>
     </div>
-    <div class="nav-right">
-      <a href="index.html" class="nav-link active">Home</a>
-      <a href="upload.html" class="nav-link">Upload App</a>
-      <a href="login.html" class="nav-link">Developers</a>
-      <a href="admin.html" class="nav-link">Admin</a>
-    </div>
-  </nav>
 
-  <!-- 🏪 MAIN CONTENT -->
-  <header class="page-header">
-    <h1>Discover & Download Trusted Apps</h1>
-    <p>All apps are verified and approved by Saksham before publishing.</p>
+    <div class="actions">
+      <div class="search-wrap">
+        <input id="searchInput" placeholder="Search apps..." />
+      </div>
+
+      <select id="categorySelect" class="select">
+        <option value="">All categories</option>
+      </select>
+
+      <select id="sortSelect" class="select">
+        <option value="newest">Newest</option>
+        <option value="trending">Trending</option>
+        <option value="topRated">Top Rated</option>
+      </select>
+
+      <a class="btn" href="upload.html">Upload App</a>
+      <a class="btn ghost" href="admin.html">Admin</a>
+      <button id="darkToggle" class="toggle-dark">Dark</button>
+    </div>
   </header>
 
-  <main>
-    <div id="appsContainer" class="app-grid">
-      <p>Loading apps...</p>
-    </div>
+  <main class="app">
+    <section id="grid" class="grid">
+      <div class="loading">Loading apps...</div>
+    </section>
   </main>
 
-  <footer>
-    <p>© 2025 Saksham App Store — Made with ❤️ by Saksham Sahu</p>
-  </footer>
+  <!-- app detail modal -->
+  <div id="modal" class="modal">
+    <div class="modal-card">
+      <button id="closeModal" class="close-btn">✕</button>
+      <div class="modal-grid">
+        <div>
+          <div id="modalScreens" class="screens"></div>
+          <img id="modalIcon" class="modal-icon" src="" alt="icon">
+        </div>
+        <div class="details">
+          <h2 id="modalTitle"></h2>
+          <div class="small" id="modalMeta"></div>
+          <p id="modalDesc"></p>
 
+          <div class="modal-actions">
+            <button id="downloadBtn" class="btn">⬇ Download</button>
+            <div id="downloadCount" class="muted small">0 downloads</div>
+            <div style="flex:1"></div>
+            <input id="ratingInput" type="number" min="1" max="5" placeholder="Rate 1-5">
+            <button id="submitReview" class="btn ghost">Submit</button>
+          </div>
+
+          <div id="reviewsArea" class="reviews">
+            <h4>Reviews</h4>
+            <div id="reviewsList"></div>
+            <textarea id="reviewText" rows="3" placeholder="Write a review (optional)"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Firebase + main JS -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-
-    // 🔥 Your Firebase config
-    const firebaseConfig = {
+    // export firebaseConfig so other modules can use it (upload/admin)
+    window.SAKSHAM_FIREBASE_CONFIG = {
       apiKey: "AIzaSyBSqIqhKAyRz0aTghiKs4exajVXXExN-kA",
       authDomain: "saksham-appstore-8a2bc.firebaseapp.com",
       projectId: "saksham-appstore-8a2bc",
@@ -54,47 +91,9 @@
       appId: "1:864411399391:web:5d33d77205f9e12eff656a",
       measurementId: "G-DM2VGMNMD2"
     };
-
-    // 🔧 Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // 📦 Fetch Approved Apps
-    async function loadApprovedApps() {
-      const appsContainer = document.getElementById("appsContainer");
-      appsContainer.innerHTML = "<p>Loading apps...</p>";
-
-      try {
-        const appsRef = collection(db, "apps");
-        const q = query(appsRef, where("status", "==", "approved"));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-          appsContainer.innerHTML = "<p>No approved apps yet.</p>";
-          return;
-        }
-
-        appsContainer.innerHTML = "";
-        querySnapshot.forEach((doc) => {
-          const app = doc.data();
-          const card = document.createElement("div");
-          card.className = "app-card";
-          card.innerHTML = `
-            <img src="${app.iconUrl || 'https://cdn-icons-png.flaticon.com/512/1179/1179120.png'}" alt="${app.appName}">
-            <h3>${app.appName}</h3>
-            <p>${app.description || 'No description available.'}</p>
-            <span>Version: ${app.version || '1.0.0'}</span><br>
-            <a href="${app.apkUrl}" class="download-btn" download>⬇ Download APK</a>
-          `;
-          appsContainer.appendChild(card);
-        });
-      } catch (error) {
-        console.error("Error loading apps:", error);
-        appsContainer.innerHTML = "<p>Error loading apps. Please try again later.</p>";
-      }
-    }
-
-    loadApprovedApps();
+    initializeApp(window.SAKSHAM_FIREBASE_CONFIG);
+    // load main.js after firebase init
+    import('./js/main.js');
   </script>
 </body>
 </html>
